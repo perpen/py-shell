@@ -4,7 +4,7 @@ from pprint import pprint
 
 
 class Command:
-    state_classes = {}
+    count = 0
 
     def __init__(self, binary, options=None, parse_usage=False):
         self.binary = binary
@@ -15,13 +15,10 @@ class Command:
             self.options = self._parse_usage(usage)
         else:
             self.options = options
-
-        if binary not in Command.state_classes:
-            state_class = Command._create_state_class(self)
-            Command.state_classes[binary] = state_class
+        self.state_class = Command._create_state_class(self)
 
     def params(self):
-        return Command.state_classes[self.binary](self)
+        return self.state_class(self)
 
     def run(self, args):
         argv = [self.binary]
@@ -86,14 +83,18 @@ class Command:
     def _create_state_class(cls, cmd):
         options = cmd.options
         class_name = Command._make_class_name(cmd)
-        print "class_name:", class_name
         state_class = type(class_name, (CommandState,), {})
         Command._register_options(state_class, options)
-        ## Cache the class
-        Command.state_classes[cmd.binary] = state_class
+        return state_class
 
     @classmethod
     def _make_class_name(cls, cmd):
+        Command.count += 1
+        class_name = "CommandState%i" % Command.count
+        return class_name
+
+    @classmethod
+    def _make_class_name0(cls, cmd):
         if cmd.__class__ == Command:
             basename = re.sub("^.*/", "", cmd.binary)
             camel_cased = "".join([s.capitalize() for s in re.split("[-_.]", basename)])
