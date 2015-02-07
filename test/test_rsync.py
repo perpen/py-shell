@@ -1,13 +1,12 @@
 #from unittest.mock import Mock
 import unittest
 #from mock import Mock
-from py_shell.command import Command, Rsync
-#import subprocess
+from py_shell.rsync import Rsync
 #from pprint import pprint
 
 
 class TestRsync(unittest.TestCase):
-    def test_rsync(self):
+    def xtest_rsync(self):
         src = "./a"
         tgt = "./b"
         rsync = Rsync(src, tgt)

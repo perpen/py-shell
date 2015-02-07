@@ -17,8 +17,7 @@ class Command:
             self.options = options
 
         if binary not in Command.state_classes:
-            state_class = Command._create_state_class(self.__class__,
-                                                      self.options)
+            state_class = Command._create_state_class(self)
             Command.state_classes[binary] = state_class
 
     def params(self):
@@ -84,10 +83,27 @@ class Command:
         return subprocess.Popen(argv, stdout=subprocess.PIPE).communicate()[0]
 
     @classmethod
-    def _create_state_class(cls, command_class, options):
-        state_class = type("%sCommandState" % command_class.__name__, (CommandState,), {})
+    def _create_state_class(cls, cmd):
+        options = cmd.options
+        class_name = Command._make_class_name(cmd)
+        print "class_name:", class_name
+        state_class = type(class_name, (CommandState,), {})
         Command._register_options(state_class, options)
-        return state_class
+        ## Cache the class
+        Command.state_classes[cmd.binary] = state_class
+
+    @classmethod
+    def _make_class_name(cls, cmd):
+        if cmd.__class__ == Command:
+            basename = re.sub("^.*/", "", cmd.binary)
+            camel_cased = "".join([s.capitalize() for s in re.split("[-_.]", basename)])
+            name = camel_cased
+        else:
+            name = cmd.__class__.__name__
+        class_name = "%sCommandState" % name
+        if class_name in Command.state_classes:  #FIXME
+            raise ValueError("bug: make up unique name: %s" % class_name)
+        return class_name
 
     @classmethod
     def _register_options(cls, klass, options):
@@ -123,10 +139,3 @@ class CommandState(object):
 
     def run(self):
         self.command.run(self.args)
-
-
-class Rsync(Command):
-    def __init__(self, src, tgt):
-        Command.__init__(self, "rsync", parse_usage=True)
-        self.src = src
-        self.tgt = tgt
