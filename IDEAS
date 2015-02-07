@@ -1,0 +1,18 @@
+Ideas:
+- Use attributes or methods depending on parameters.
+
+Vision:
+- Make use of Unix or server commands more testable: unit tests.
+
+Why Python?
+No nice way of unit-testing shell scripts.
+Exceptions allow for clearer code, better error detection.
+
+Cons
+- Editor cannot detect whether methods exist, so not as useful as could be.
+- Less concise?
+- Need to learn new lib?
+
+Use cases
+- Start Tomcat
+- Backup script

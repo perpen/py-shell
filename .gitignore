@@ -1,0 +1,14 @@
+#######
+tags
+*.LOG
+*.log
+
+######## Vim
+*.swp
+*.un~
+
+######## Python
+*.pyc
+*.egg-info/
+build/
+dist/
