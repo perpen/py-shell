@@ -1,24 +1,34 @@
 #from unittest.mock import Mock
 import unittest
 #from mock import Mock
-from py_shell.command import Command, CommandState
+from py_shell.command import Command
 #import subprocess
 #from pprint import pprint
 
 
 class TestCommand(unittest.TestCase):
     def test_1(self):
-        #ls = Command("/usr/bin/ls_and-other.things", options=True)
         ls = Command("/usr/bin/ls", parse_usage=True)
         ls.params().literal().run()
         ls = Command("ls", parse_usage=True)
         ls.params().literal().run()
-        fail
 
-    def xtest_2(self):
+    def test_2(self):
+        ls = LsCommand()
+        ls.literal().run()
+
+
+class LsCommand(Command):
+    def __init__(self):
+        Command.__init__(self)
+
+    def run(self):
         pass
 
-
-class LsCommand(CommandState):
     def literal(self):
-        super(LsCommand, self).literal()
+        print "parsing literal"
+
+
+class LsCommandState(CommandState):
+    def literal(self):
+        self.sup.literal()

@@ -6,6 +6,10 @@ from pprint import pprint
 class Command:
     count = 0
 
+    @classmethod
+    def create(cls, binary, options=None, parse_usage=False):
+
+
     def __init__(self, binary, options=None, parse_usage=False):
         self.binary = binary
         if not (options or parse_usage) or (options and parse_usage):
