@@ -1,101 +1,135 @@
 #from unittest.mock import Mock
 import unittest
 #from mock import Mock
-from py_shell.command import Command
-#import subprocess
+from py_shell.command import Command, UsageParser, Option
 from pprint import pprint
 from types import MethodType
 
 
+class TestUsageParser(unittest.TestCase):
+    def test_normal_usage_is_parsed_correctly(self):
+        usage = """Blah
+            -o, --output=OUTPUT Specifies output
+            -v
+        blah
+        """
+
+        actual_options = UsageParser().parse(usage)
+
+        expected_options = {
+            "o": Option("o", "-o", "Specifies output", "OUTPUT"),
+            "output": Option("output", "--output", "Specifies output", "OUTPUT"),
+            "v": Option("v", "-v", None, None),
+        }
+        self.assertEqual(tuple(expected_options), tuple(actual_options))
+
+    def test_empty_usage_produces_no_options(self):
+        usage = ""
+
+        actual_options = UsageParser().parse(usage)
+
+        expected_options = {}
+        self.assertEqual(tuple(expected_options), tuple(actual_options))
+
+
+class TestOption(unittest.TestCase):
+    def xtest_ctor_validation_successes(self):
+        Option("a", "-a", "All", "STUFF")
+        Option("a", "-a", "All", None)
+        Option("a", "-a", None, "STUFF")
+        Option("a", "-a", None, None)
+
+    def test_ctor_validation_fails_missing_params(self):
+        names_switches = [
+            ("a", None),
+            (None, "-a"),
+            (None, None),
+            (" ", None),
+        ]
+        for name_switch in names_switches:
+            name = name_switch[0]
+            switch = name_switch[1]
+            try:
+                Option(name, switch, None, None)
+                self.fail()
+            except ValueError as e:
+                self.assertEqual("both 'name' and 'switch' must be provided", e.args[0])
+
+    def test_ctor_validation_fails_invalid_name(self):
+        names = [
+            " ",
+            "a b",
+            "a/b",
+            "a.b",
+        ]
+        for name in names:
+            try:
+                Option(name, "-a", None, None)
+                self.fail()
+            except ValueError as e:
+                msg = "option name should contain no chars illegal for python symbols: '%s'" % name
+                self.assertEqual(msg, e.args[0])
+
+
 class TestCommand(unittest.TestCase):
-    def test1(self):
-        ls = LsCommand()
+    def test_chaining_of_options(self):
+        options = {
+            "l": Option("l", "-l", None, None),
+            "a": Option("a", "-a", None, None),
+        }
+        ls = Command(binary="ls", options=options)
+
         self.assertEqual(["ls"], ls.argv())
-        self.assertEqual(["ls", "--all"], ls.all().argv())
-        self.assertEqual(["ls", "--all", "--literal"], ls.all().literal().argv())
-        #fail
+        self.assertEqual(["ls", "-l"], ls.l().argv())
+        self.assertEqual(["ls", "-a", "-l"], ls.a().l().argv())
 
-    def test2(self):
-        ls = Command(binary="ls", parse_usage=True)
-        ls_l = ls.l()
-        ls_la = ls_l.a()
-        self.assertEqual(["ls", "-l"], ls_l.argv())
-        self.assertEqual(["ls", "-l", "-a"], ls_la.argv())
-        self.assertEqual(["ls", "-l"], ls_l.argv())
+    def test_command_states_are_isolated(self):
+        options = {
+            "l": Option("l", "-l", None, None),
+            "a": Option("a", "-a", None, None),
+            "t": Option("t", "-t", None, None),
+        }
+        ls = Command(binary="ls", options=options)
+        ls_a = ls.a()
+        ls_al = ls_a.l()
+        ls_at = ls_a.t()
 
-    def xtest_2(self):
+        self.assertEqual(["ls"], ls.argv())
+        self.assertEqual(["ls", "-a"], ls_a.argv())
+        self.assertEqual(["ls", "-a", "-l"], ls_al.argv())
+        self.assertEqual(["ls", "-a", "-t"], ls_at.argv())
+
+    def test_command_subclass(self):
+        options = {
+            "l": Option("l", "-l", None, None),
+            "a": Option("a", "-a", None, None),
+            "t": Option("t", "-t", None, None),
+        }
+
+        class LsCommand(Command):
+            def __init__(self, *args, **kwargs):
+                kwargs["options"] = options
+                Command.init(self, "ls", True, **kwargs)
+
+            def l(self):
+                # We will check that the -l option is processed.
+                return self._invoke_super("l")
+
+            def a(self):
+                # We will check that the -a option is ignored.
+                return self
+
+            def blah(self):
+                # We want to add "-a", to do that we have to invoke_super.
+                return self.l()._invoke_super("a").t()
+
         ls = LsCommand()
-        #ls.help().run()
-        ls._register_options()
+        ls_a = ls.a()
+        ls_al = ls_a.l()
+        ls_at = ls_a.t()
 
-        print "\nls.run():"
-        #ls.literal().help().run()
-        ls.help().literal().run()
-
-        fail
-
-    def xtest_2(self):
-        ls = LsCommand()
-        ls2 = ls.literal()
-
-        print "\nls.run():"
-        ls.help().run()
-
-        #print "\nls2.run():"
-        #ls2.run()
-
-        print "\nls2.help().run():"
-        ls2.help().run()
-
-        #rsync = RsyncCommand()
-        #rsync.run()
-        fail
-
-    def xtest_copy_methods(self):
-        t = Thing()
-
-        def oi(self):
-            print "hey"
-        oi.__name__ = "hey"
-
-        m = MethodType(oi, t)
-        setattr(t, "hey", m)
-
-        t.hey()
-
-        ###########
-        t2 = Thing()
-
-        m = t.__dict__["hey"]
-        print m
-        t2.__dict__["hey"] = m
-
-        t2.hey()
-        fail
-
-
-class Thing:
-    pass
-
-
-def option(func):
-    print "@option: ", func
-    return func
-
-
-class LsCommand(Command):
-    def __init__(self, *args, **kwargs):
-        Command.init(self, "ls", True, **kwargs)
-
-    def __init__0(self, *args, **kwargs):
-        kwargs.update(binary="ls", parse_usage=True)
-        Command.__init__(self, **kwargs)
-
-    def help(self):
-        print "############## overriden help"
-        return self._invoke_super("help")
-
-
-class RsyncCommand(Command):
-    def __init__(self):
-        Command.__init__(self, binary="rsync", parse_usage=True)
+        self.assertEqual(["ls"], ls.argv())
+        self.assertEqual(["ls"], ls_a.argv())
+        self.assertEqual(["ls", "-l"], ls_al.argv())
+        self.assertEqual(["ls", "-t"], ls_at.argv())
+        self.assertEqual(["ls", "-l", "-a", "-t"], ls.blah().argv())

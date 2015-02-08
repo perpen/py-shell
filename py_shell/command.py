@@ -23,7 +23,8 @@ class Command(object):
         # Implementation detail: This constructor will also be called under other forms
         # (with a 'pred' parameter) when chaining option calls.
         if not pred:
-            Command._validate_init_params(binary, options, parse_usage)
+            if not binary:
+                raise ValueError("missing parameter 'binary'")
             self.binary = binary
             if options:
                 self.options = options
@@ -41,14 +42,6 @@ class Command(object):
         """Must be called from subclasses constructors."""
         kwargs.update(binary=binary, parse_usage=parse_usage)
         Command.__init__(self, **kwargs)
-
-    @classmethod
-    def _validate_init_params(cls, binary, options, parse_usage):
-        if not binary:
-            raise ValueError("missing parameter 'binary'")
-        if options:
-            for name, option in options.items():
-                Option._validate(option)
 
     def run(self):
         argv = self.argv(self)
@@ -106,22 +99,23 @@ class Command(object):
 
 class Option:
     def __init__(self, name, switch, help, value):
-        self.name = name
-        self.switch = switch
+        if not (name and switch):
+            raise ValueError("both 'name' and 'switch' must be provided")
+        if not re.match("^\w+$", name):
+            # We will be using the option name as a method name
+            raise ValueError("option name should contain no chars illegal for python symbols: '%s'" % name)
+        self.name = name.strip()
+        self.switch = switch.strip()
         self.help = help
         self.value = value
 
     def __repr__(self):
-        return "Option(name: %s, switch: %s, help: ..., value: %s)" % (
+        return "Option(name: %s, switch: %s, help: %s, value: %s)" % (
             self.name,
             self.switch,
+            self.help,
             self.value,
         )
-
-    @classmethod
-    def _validate(cls, option):
-        if not (self.name and self.switch):
-            raise ValueError("invalid optiion: %s" % option)
 
 
 class UsageParser:
@@ -134,15 +128,16 @@ class UsageParser:
             -o, --output=OUTPUT Specifies output
             -v
         We'll get these entries in the dictionnary:
-            "o": ("-o", "Specifies output", "OUTPUT")
-            "output": ("--output", "Specifies output", "OUTPUT")
-            "v": ("-v", None, None)
+            "o": Option("-o", "Specifies output", "OUTPUT")
+            "output": Option("--output", "Specifies output", "OUTPUT")
+            "v": Option("-v", None, None)
+
         """
         ## Find all the options
         rx = re.compile("^\\s+(-[^\\s,]+)(?:,\\s+(-[^\\s,]+))*(?:\\s+([^-].*))?", re.MULTILINE)
         matches = re.findall(rx, usage)
-        if not matches:
-            raise ValueError("unable to parse usage string")
+        #if not matches:
+            #raise ValueError("unable to parse usage string")
 
         options = {}
         for match in matches:  # parse each matching line
@@ -155,8 +150,8 @@ class UsageParser:
 
             for token in tokens:
                 if token.startswith("-"):
-                    # Remove "=VALUE" from the end.
-                    switch = re.sub("=.*$", "", token)
+                    # Remove "=VALUE" or [=VALUE]from the end.
+                    switch = re.sub("\[?=.*$", "", token)
                     switches.append(switch)
                     if "=" in token:
                         value_index = token.index("=") + 1
@@ -166,6 +161,7 @@ class UsageParser:
 
             for switch in switches:
                 name = re.sub("^-+", "", switch)
+                name = re.sub("-", "_", name)
                 options[name] = Option(name, switch, help, value)
 
         return options
