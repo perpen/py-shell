@@ -1,9 +1,5 @@
-#from unittest.mock import Mock
 import unittest
-#from mock import Mock
 from py_shell.command import Command, UsageParser, Option
-from pprint import pprint
-from types import MethodType
 
 
 class TestUsageParser(unittest.TestCase):
@@ -119,9 +115,9 @@ class TestCommand(unittest.TestCase):
                 # We will check that the -a option is ignored.
                 return self
 
-            def blah(self):
-                # We want to add "-a", to do that we have to invoke_super.
-                return self.l()._invoke_super("a").t()
+            def l_and_a_and_t(self):
+                # We want to invoke the a() method of our parent class
+                return self.l().super_a().t()
 
         ls = LsCommand()
         ls_a = ls.a()
@@ -132,4 +128,4 @@ class TestCommand(unittest.TestCase):
         self.assertEqual(["ls"], ls_a.argv())
         self.assertEqual(["ls", "-l"], ls_al.argv())
         self.assertEqual(["ls", "-t"], ls_at.argv())
-        self.assertEqual(["ls", "-l", "-a", "-t"], ls.blah().argv())
+        self.assertEqual(["ls", "-l", "-a", "-t"], ls.l_and_a_and_t().argv())

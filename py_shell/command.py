@@ -60,6 +60,17 @@ class Command(object):
         return super(type(self), self).__getattr__(name)(arg)
 
     def __getattr__(self, name):
+        print "###", name
+        if name.startswith("super_"):
+            name = re.sub("^super_", "", name)
+            
+        if name in self.options:
+            option = self.options[name]
+            return Command._make_method_for_object(option, self)
+        else:
+            raise ValueError("no such option: %s" % name)
+
+    def __getattr__0(self, name):
         if name in self.options:
             option = self.options[name]
             return Command._make_method_for_object(option, self)
