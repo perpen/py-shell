@@ -132,9 +132,8 @@ class Command(object):
                 options[switch] = (actual_switch, help, value)
 
         ##FIXME
-        options = {
-            "help": options["help"],
-            "literal": options["literal"],
-        }
+        #options = {
+            #"help": options["help"],
+            #"literal": options["literal"],
+        #}
         return options
-

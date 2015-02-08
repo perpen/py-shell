@@ -13,8 +13,15 @@ class TestCommand(unittest.TestCase):
         ls = LsCommand()
         ls.help().run()
         ls.help().run()
-        ls.help().literal().run()
+        ls.help().all().literal().all().run()
         fail
+
+    def test2(self):
+        ls = Command(binary="ls", parse_usage=True)
+        ls2 = ls.help().literal()
+        ls.help().run()
+        ls2.run()
+        #fail
 
     def xtest_2(self):
         ls = LsCommand()
