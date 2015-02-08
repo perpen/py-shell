@@ -69,21 +69,24 @@ class Command(object):
     def __getattr__(self, name):
         if name in self.options:
             option = self.options[name]
-
-            def func(self, arg=None):
-                print "processing option %s" % name
-                new_args = list(self.args)
-                new_args.append(option.switch)
-                if arg:
-                    new_args.append(arg)
-                return self.__class__(pred=self, args=new_args)
-
-            func.__doc__ = help
-            func.__name__ = name
-            method = MethodType(func, self)
-            return method
+            return Command._make_method_for_object(option, self)
         else:
-            raise ValueError("no option: %s" % name)
+            raise ValueError("no such option: %s" % name)
+
+    @classmethod
+    def _make_method_for_object(cls, option, self):
+        def func(self, arg=None):
+            print "processing option %s" % option.name
+            new_args = list(self.args)
+            new_args.append(option.switch)
+            if arg:
+                new_args.append(arg)
+            return self.__class__(pred=self, args=new_args)
+
+        func.__doc__ = help
+        func.__name__ = option.name
+        method = MethodType(func, self)
+        return method
 
     def arg(self, arg):
         self.args.append(arg)
