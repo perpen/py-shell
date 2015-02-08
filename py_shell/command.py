@@ -27,9 +27,14 @@ class Command(object):
                 self.options = options
             self.args = []
 
-    def run(self):
+
+    def _argv(self):
         argv = [self.binary]
         argv.extend(self.args)
+        return argv
+
+    def run(self):
+        argv = self._argv(self)
         print "running: %s" % " ".join(argv)
 
     def _capture_output(self, argv):
@@ -45,7 +50,7 @@ class Command(object):
             def f(self, arg=None):
                 print "processing option %s" % name
                 new_args = list(self.args)
-                new_args.append(option[0])
+                new_args.append(option.switch)
                 if arg:
                     new_args.append(arg)
                 return self.__class__(pred=self, args=new_args)
@@ -112,15 +117,15 @@ class Command(object):
             tokens = [token for token in match if token]
 
             switches = []  # e.g. ["-o", "--output"]
-            actual_switch = None
             value = None  # e.g. "FILE"
             help = None  # e.g. "Output file"
 
             for token in tokens:
                 if token.startswith("-"):
                     # Remove dashes from the beginning, and "=VALUE" from the end.
-                    actual_switch = re.sub("=.*$", "", token)
-                    switch = re.sub("(^-+|=.*$)", "", token)
+                    #actual_switch = re.sub("=.*$", "", token)
+                    #name = re.sub("(^-+|=.*$)", "", token)
+                    switch = re.sub("=.*$", "", token)
                     switches.append(switch)
                     if "=" in token:
                         value_index = token.index("=") + 1
@@ -129,11 +134,28 @@ class Command(object):
                     help = token
 
             for switch in switches:
-                options[switch] = (actual_switch, help, value)
+                name = re.sub("^-+", "", switch)
+                options[name] = Option(name, switch, help, value)
 
         ##FIXME
         #options = {
             #"help": options["help"],
             #"literal": options["literal"],
         #}
+        #pprint(options)
         return options
+
+
+class Option:
+    def __init__(self, name, switch, help, value):
+        self.name = name
+        self.switch = switch
+        self.help = help
+        self.value = value
+
+    def __repr__(self):
+        return "Option(name: %s, switch: %s, help: ..., value: %s)" % (
+            self.name,
+            self.switch,
+            self.value,
+        )
