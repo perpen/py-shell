@@ -78,6 +78,8 @@ def option(func):
 
 class LsCommand(Command):
     def __init__(self, *args, **kwargs):
+        kwargs["binary"] = "ls"
+        kwargs["parse_usage"] = True
         Command.__init__(self, *args, **kwargs)
 
     def __init__0(self, pred=None, args=None):
