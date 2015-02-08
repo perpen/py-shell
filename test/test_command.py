@@ -11,8 +11,9 @@ class TestCommand(unittest.TestCase):
     def test1(self):
         print 1
         ls = LsCommand()
-        ls.help()
-        ls.literal()
+        ls.help().run()
+        ls.help().run()
+        ls.help().literal().run()
         fail
 
     def xtest_2(self):
@@ -76,8 +77,11 @@ def option(func):
 
 
 class LsCommand(Command):
-    def __init__(self, pred=None, args=None):
-        Command.__init__(self, binary="ls", parse_usage=True)
+    def __init__(self, *args, **kwargs):
+        Command.__init__(self, *args, **kwargs)
+
+    def __init__0(self, pred=None, args=None):
+        Command.__init__(self, binary="ls", parse_usage=True, pred=pred, args=args)
 
     def help(self):
         print "############## overriden help"

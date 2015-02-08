@@ -5,16 +5,22 @@ from pprint import pprint
 
 
 class Command(object):
-    def __init__(self, binary=None, options=None, parse_usage=False):
-        self.binary = binary
-        if not (options or parse_usage) or (options and parse_usage):
-            raise ValueError("provide constructor with one of: parse_usage, options")
-        if parse_usage:
-            usage = self._capture_output([binary, "--help"])
-            self.options = self._parse_usage(usage)
+    def __init__(self, binary=None, options=None, parse_usage=False, pred=None, args=[]):
+        if pred:
+            self.binary = pred.binary
+            self.options = pred.options
+            self.args = args
+            print "args:", args
         else:
-            self.options = options
-        self.args = []
+            self.binary = binary
+            if not (options or parse_usage) or (options and parse_usage):
+                raise ValueError("provide constructor with one of: parse_usage, options")
+            if parse_usage:
+                usage = self._capture_output([binary, "--help"])
+                self.options = self._parse_usage(usage)
+            else:
+                self.options = options
+            self.args = []
 
     def run(self):
         argv = [self.binary]
@@ -33,9 +39,11 @@ class Command(object):
             print "handling option %s" % name
             def f(self, arg=None):
                 print "processing option %s" % name
-                self.args.append(option[0])
+                new_args = list(self.args)
+                new_args.append(option[0])
                 if arg:
-                    self.args.append(arg)
+                    new_args.append(arg)
+                return self.__class__(pred=self, args=new_args)
             f.__doc__ = help
             f.__name__ = name
             method = MethodType(f, self)
