@@ -105,7 +105,6 @@ class Command:
             args.append(actual_switch)
             if arg:
                 args.append(arg)
-            #return Command(pred=self, args=args)
             return self.__class__(pred=self, args=args)
         add_option.__doc__ = help
         add_option.__name__ = switch

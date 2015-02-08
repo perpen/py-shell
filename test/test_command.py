@@ -10,11 +10,12 @@ from types import MethodType
 class TestCommand(unittest.TestCase):
     def test_2(self):
         ls = LsCommand()
-        ls.help().run()
+        #ls.help().run()
         ls._register_options()
 
         print "\nls.run():"
-        ls.help().run()
+        #ls.literal().help().run()
+        ls.help().literal().run()
 
         fail
 
@@ -74,8 +75,9 @@ class LsCommand(Command):
     #@option
     def help(self):
         print "############## good"
-        self.args.append("--HELP")
-        return self
+        args = list(self.args)
+        args.append("--HELP")
+        return LsCommand(pred=self, args=args)
 
 
 class RsyncCommand(Command):
