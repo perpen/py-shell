@@ -10,18 +10,18 @@ from types import MethodType
 class TestCommand(unittest.TestCase):
     def test1(self):
         ls = LsCommand()
-        self.assertEqual(["ls"], ls._argv())
-        self.assertEqual(["ls", "--all"], ls.all()._argv())
-        self.assertEqual(["ls", "--all", "--literal"], ls.all().literal()._argv())
+        self.assertEqual(["ls"], ls.argv())
+        self.assertEqual(["ls", "--all"], ls.all().argv())
+        self.assertEqual(["ls", "--all", "--literal"], ls.all().literal().argv())
         #fail
 
     def test2(self):
         ls = Command(binary="ls", parse_usage=True)
         ls_l = ls.l()
         ls_la = ls_l.a()
-        self.assertEqual(["ls", "-l"], ls_l._argv())
-        self.assertEqual(["ls", "-l", "-a"], ls_la._argv())
-        self.assertEqual(["ls", "-l"], ls_l._argv())
+        self.assertEqual(["ls", "-l"], ls_l.argv())
+        self.assertEqual(["ls", "-l", "-a"], ls_la.argv())
+        self.assertEqual(["ls", "-l"], ls_l.argv())
 
     def xtest_2(self):
         ls = LsCommand()
@@ -93,7 +93,7 @@ class LsCommand(Command):
 
     def help(self):
         print "############## overriden help"
-        return self._pass("help")
+        return self._invoke_super("help")
 
 
 class RsyncCommand(Command):

@@ -1,5 +1,6 @@
 Ideas:
 - Use attributes or methods depending on parameters.
+- Command ctor should take optional default argv
 
 Vision:
 - Make use of Unix or server commands more testable: unit tests.
