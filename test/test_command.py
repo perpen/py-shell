@@ -3,24 +3,31 @@ import unittest
 #from mock import Mock
 from py_shell.command import Command
 #import subprocess
-#from pprint import pprint
+from pprint import pprint
 from types import MethodType
 
 
 class TestCommand(unittest.TestCase):
     def test_2(self):
         ls = LsCommand()
-        ls2 = ls.literal()
-        print "\nls.run():"
-        #ls.literal().run()
         ls.help().run()
-        #ls.literal().literal().literal().run()
-        print "\nls2.run():"
-        ls2.run()
+        ls._register_options()
+
+        print "\nls.run():"
+        ls.help().run()
+
+        fail
+
+    def xtest_2(self):
+        ls = LsCommand()
+        ls2 = ls.literal()
+
+        print "\nls.run():"
+        ls.help().run()
+
         #print "\nls2.run():"
         #ls2.run()
-        #print "\nls.help().run():"
-        #ls.help().run()
+
         print "\nls2.help().run():"
         ls2.help().run()
 
@@ -54,9 +61,22 @@ class TestCommand(unittest.TestCase):
 class Thing:
     pass
 
+
+def option(func):
+    print "@option: ", func
+    return func
+
+
 class LsCommand(Command):
-    def __init__(self):
-        Command.__init__(self, binary="ls", parse_usage=True)
+    def __init__(self, pred=None, args=None):
+        Command.__init__(self, binary="ls", parse_usage=True, pred=pred, args=args)
+
+    #@option
+    def help(self):
+        print "############## good"
+        self.args.append("--HELP")
+        return self
+
 
 class RsyncCommand(Command):
     def __init__(self):

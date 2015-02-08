@@ -9,9 +9,12 @@ class Command:
         if pred:
             self.binary = pred.binary
             self.options = pred.options
-            self._register_options()
-            self.args = list(args)
+            #self._register_options()
+            self.args = args
         else:
+            #TODO - detect overriden methods?
+            #print "self.class:", self.__class__.__name__
+
             self.binary = binary
             if not (options or parse_usage) or (options and parse_usage):
                 raise ValueError("provide constructor with one of: parse_usage, options")
@@ -20,7 +23,7 @@ class Command:
                 self.options = self._parse_usage(usage)
             else:
                 self.options = options
-            self._register_options()
+            #self._register_options()
             self.args = []
 
     def run(self):
@@ -76,6 +79,11 @@ class Command:
             for switch in switches:
                 options[switch] = (actual_switch, help, value)
 
+        ##FIXME
+        options = {
+            "help": options["help"],
+            "literal": options["literal"],
+        }
         return options
 
     def _capture_output(self, argv):
@@ -84,7 +92,7 @@ class Command:
     def _register_options(self):
         for switch, actual_and_help_and_value in self.options.items():
             actual_switch, help, value = actual_and_help_and_value
-            Command._register_option(self, switch, actual_switch, help, value)
+            self._register_option(switch, actual_switch, help, value)
 
     def _register_option(self, switch, actual_switch, help, value):
         def add_option(self, arg=None):
@@ -97,11 +105,17 @@ class Command:
             args.append(actual_switch)
             if arg:
                 args.append(arg)
-            return Command(pred=self, args=args)
+            #return Command(pred=self, args=args)
+            return self.__class__(pred=self, args=args)
         add_option.__doc__ = help
         add_option.__name__ = switch
         method = MethodType(add_option, self)
-        setattr(self, add_option.__name__, method)
+        print "self.class:", self.__class__.__name__
+        print "self.help: ", self.__dict__.get("help")
+        if switch not in dir(self):
+            setattr(self, add_option.__name__, method)
+        else:
+            print "\tnot overriding %s" % switch
 
     def arg(self, arg):
         self.args.append(arg)
