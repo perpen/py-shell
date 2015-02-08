@@ -46,6 +46,7 @@ class Command(object):
     def run(self):
         argv = self.argv(self)
         print "running: %s" % " ".join(argv)
+        return self._capture_output(argv)
 
     def argv(self):
         "Exposed to help subclasses with unit testing."
@@ -54,7 +55,10 @@ class Command(object):
         return argv
 
     def _capture_output(self, argv):
-        return subprocess.Popen(argv, stdout=subprocess.PIPE).communicate()[0]
+        #return subprocess.Popen(argv, stdout=subprocess.PIPE).communicate()[0]
+        return subprocess.Popen(argv,
+                                stdout=subprocess.PIPE,
+                                stderr=subprocess.PIPE).communicate()[1]
 
     def _invoke_super(self, name, arg=None):
         return super(type(self), self).__getattr__(name)(arg)
@@ -63,6 +67,8 @@ class Command(object):
         if name.startswith("super_"):
             # FIXME - document
             name = re.sub("^super_", "", name)
+            if name == "run":
+                return super(type(self), self).run
         if name in self.options:
             option = self.options[name]
             return Command._make_method_for_object(option, self)

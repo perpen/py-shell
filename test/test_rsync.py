@@ -1,13 +1,14 @@
-#from unittest.mock import Mock
 import unittest
-#from mock import Mock
 from py_shell.rsync import Rsync
-#from pprint import pprint
 
 
 class TestRsync(unittest.TestCase):
-    def xtest_rsync(self):
-        src = "./a"
-        tgt = "./b"
-        rsync = Rsync(src, tgt)
-        rsync.params().verbose().run()
+
+    def test_1(self):
+        rsync = Rsync()
+
+        rsync.sources("/src1", "/src2").destination("/tgt")
+
+        self.assertEqual(["rsync"], rsync.argv())
+        print rsync.run()
+        fail
