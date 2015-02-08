@@ -78,12 +78,11 @@ def option(func):
 
 class LsCommand(Command):
     def __init__(self, *args, **kwargs):
-        kwargs["binary"] = "ls"
-        kwargs["parse_usage"] = True
-        Command.__init__(self, *args, **kwargs)
+        Command.init(self, "ls", True, **kwargs)
 
-    def __init__0(self, pred=None, args=None):
-        Command.__init__(self, binary="ls", parse_usage=True, pred=pred, args=args)
+    def __init__0(self, *args, **kwargs):
+        kwargs.update(binary="ls", parse_usage=True)
+        Command.__init__(self, **kwargs)
 
     def help(self):
         print "############## overriden help"

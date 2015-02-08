@@ -5,14 +5,12 @@ from pprint import pprint
 
 
 class Command(object):
-    #def __init__(self, binary=None, options=None, parse_usage=False, pred=None, args=[]):
-    def __init__(self, *args, **kwargs):
-        #pprint(kwargs)
-        binary = kwargs.get("binary")
-        options = kwargs.get("options")
-        parse_usage = kwargs.get("parse_usage")
-        pred = kwargs.get("pred")
-        args = kwargs.get("args")
+    @classmethod
+    def init(cls, self, binary, parse_usage, **kwargs):
+        kwargs.update(binary=binary, parse_usage=parse_usage)
+        Command.__init__(self, **kwargs)
+
+    def __init__(self, binary=None, options=None, parse_usage=False, pred=None, args=[]):
         if pred:
             self.binary = pred.binary
             self.options = pred.options
