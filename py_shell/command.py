@@ -5,7 +5,7 @@ from pprint import pprint
 
 
 class Command(object):
-    def __init__(self, binary=None, options=None, parse_usage=False, pred=None, args=[]):
+    def __init__(self, binary=None, options=None, pred=None, args=[]):
         """
         When creating a Command object, use one of these two forms:
             Command(binary=BINARY)
@@ -38,9 +38,9 @@ class Command(object):
             self.args = args
 
     @classmethod
-    def init(cls, self, binary, parse_usage, **kwargs):
+    def init(cls, self, binary, **kwargs):
         """Must be called from subclasses constructors."""
-        kwargs.update(binary=binary, parse_usage=parse_usage)
+        kwargs.update(binary=binary)
         Command.__init__(self, **kwargs)
 
     def run(self):
@@ -60,10 +60,9 @@ class Command(object):
         return super(type(self), self).__getattr__(name)(arg)
 
     def __getattr__(self, name):
-        print "###", name
         if name.startswith("super_"):
+            # FIXME - document
             name = re.sub("^super_", "", name)
-            
         if name in self.options:
             option = self.options[name]
             return Command._make_method_for_object(option, self)

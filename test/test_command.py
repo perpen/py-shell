@@ -105,7 +105,7 @@ class TestCommand(unittest.TestCase):
         class LsCommand(Command):
             def __init__(self, *args, **kwargs):
                 kwargs["options"] = options
-                Command.init(self, "ls", True, **kwargs)
+                Command.init(self, "ls", **kwargs)
 
             def l(self):
                 # We will check that the -l option is processed.
