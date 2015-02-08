@@ -4,32 +4,71 @@ from types import MethodType
 from pprint import pprint
 
 
-class Command:
-    def __init__(self, binary=None, options=None, parse_usage=False, pred=None, args=[]):
-        if pred:
-            self.binary = pred.binary
-            self.options = pred.options
-            #self._register_options()
-            self.args = args
+class Command(object):
+    def __init__(self, binary=None, options=None, parse_usage=False):
+        self.binary = binary
+        if not (options or parse_usage) or (options and parse_usage):
+            raise ValueError("provide constructor with one of: parse_usage, options")
+        if parse_usage:
+            usage = self._capture_output([binary, "--help"])
+            self.options = self._parse_usage(usage)
         else:
-            #TODO - detect overriden methods?
-            #print "self.class:", self.__class__.__name__
-
-            self.binary = binary
-            if not (options or parse_usage) or (options and parse_usage):
-                raise ValueError("provide constructor with one of: parse_usage, options")
-            if parse_usage:
-                usage = self._capture_output([binary, "--help"])
-                self.options = self._parse_usage(usage)
-            else:
-                self.options = options
-            #self._register_options()
-            self.args = []
+            self.options = options
+        self.args = []
 
     def run(self):
         argv = [self.binary]
         argv.extend(self.args)
         print "running: %s" % " ".join(argv)
+
+    def _capture_output(self, argv):
+        return subprocess.Popen(argv, stdout=subprocess.PIPE).communicate()[0]
+
+    def _pass(self, name, arg=None):
+        return super(type(self), self).__getattr__(name)(arg)
+
+    def __getattr__(self, name):
+        if name in self.options:
+            option = self.options[name]
+            print "handling option %s" % name
+            def f(self, arg=None):
+                print "processing option %s" % name
+                self.args.append(option[0])
+                if arg:
+                    self.args.append(arg)
+            f.__doc__ = help
+            f.__name__ = name
+            method = MethodType(f, self)
+            return method
+        else:
+            print "no option: %s" % name
+
+    def _register_option(self, switch, actual_switch, help, value):
+        def handle_option(self, arg=None):
+            print "stating", switch
+            if value and not arg:
+                raise ValueError("missing parameter for option %s" % switch)
+            if arg and not value:
+                raise ValueError("option %s does not take parameter, was given: %s" % (actual_switch, arg))
+            args = list(self.args)
+            args.append(actual_switch)
+            if arg:
+                args.append(arg)
+            return self.__class__(pred=self, args=args)
+        handle_option.__doc__ = help
+        handle_option.__name__ = switch
+        method = MethodType(handle_option, self)
+        if switch not in dir(self):
+            setattr(self, handle_option.__name__, method)
+        else:
+            print "\tnot overriding %s" % switch
+
+    def arg(self, arg):
+        self.args.append(arg)
+        return self
+
+    def run(self):
+        print "running ", self.binary, self.args
 
     def pipe(self, other):
         # run myself, capture outputs
@@ -86,39 +125,3 @@ class Command:
         }
         return options
 
-    def _capture_output(self, argv):
-        return subprocess.Popen(argv, stdout=subprocess.PIPE).communicate()[0]
-
-    def _register_options(self):
-        for switch, actual_and_help_and_value in self.options.items():
-            actual_switch, help, value = actual_and_help_and_value
-            self._register_option(switch, actual_switch, help, value)
-
-    def _register_option(self, switch, actual_switch, help, value):
-        def add_option(self, arg=None):
-            print "stating", switch
-            if value and not arg:
-                raise ValueError("missing parameter for option %s" % switch)
-            if arg and not value:
-                raise ValueError("option %s does not take parameter, was given: %s" % (actual_switch, arg))
-            args = list(self.args)
-            args.append(actual_switch)
-            if arg:
-                args.append(arg)
-            return self.__class__(pred=self, args=args)
-        add_option.__doc__ = help
-        add_option.__name__ = switch
-        method = MethodType(add_option, self)
-        print "self.class:", self.__class__.__name__
-        print "self.help: ", self.__dict__.get("help")
-        if switch not in dir(self):
-            setattr(self, add_option.__name__, method)
-        else:
-            print "\tnot overriding %s" % switch
-
-    def arg(self, arg):
-        self.args.append(arg)
-        return self
-
-    def run(self):
-        print "running ", self.binary, self.args

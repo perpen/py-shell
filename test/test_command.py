@@ -8,7 +8,14 @@ from types import MethodType
 
 
 class TestCommand(unittest.TestCase):
-    def test_2(self):
+    def test1(self):
+        print 1
+        ls = LsCommand()
+        ls.help()
+        ls.literal()
+        fail
+
+    def xtest_2(self):
         ls = LsCommand()
         #ls.help().run()
         ls._register_options()
@@ -70,14 +77,11 @@ def option(func):
 
 class LsCommand(Command):
     def __init__(self, pred=None, args=None):
-        Command.__init__(self, binary="ls", parse_usage=True, pred=pred, args=args)
+        Command.__init__(self, binary="ls", parse_usage=True)
 
-    #@option
     def help(self):
-        print "############## good"
-        args = list(self.args)
-        args.append("--HELP")
-        return LsCommand(pred=self, args=args)
+        print "############## overriden help"
+        return self._pass("help")
 
 
 class RsyncCommand(Command):
