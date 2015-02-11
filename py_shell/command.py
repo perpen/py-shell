@@ -4,6 +4,11 @@ from types import MethodType
 from pprint import pprint
 
 
+class CommandUsageError(BaseException):
+    def __init__(self, msg):
+        BaseException.__init__(self, msg)
+
+
 class Command(object):
     def __init__(self, binary=None, options=None, pred=None, args=[]):
         """
@@ -29,7 +34,9 @@ class Command(object):
             if options:
                 self.options = options
             else:
-                usage = self._capture_output([binary, "--help"])
+                usage_out, usage_err = self._capture_output([binary, "--help"])
+                usage = usage_out + "\n@@@\n" + usage_err
+                #print usage
                 self.options = self._parse_usage(usage)
             self.args = []
         else:
@@ -44,9 +51,12 @@ class Command(object):
         Command.__init__(self, **kwargs)
 
     def run(self):
-        argv = self.argv(self)
-        print "running: %s" % " ".join(argv)
+        argv = self.process_args(self.argv())
+        print "Command.run(): %s" % " ".join(argv)
         return self._capture_output(argv)
+
+    def process_args(self, args):
+        return args
 
     def argv(self):
         "Exposed to help subclasses with unit testing."
@@ -55,13 +65,9 @@ class Command(object):
         return argv
 
     def _capture_output(self, argv):
-        #return subprocess.Popen(argv, stdout=subprocess.PIPE).communicate()[0]
         return subprocess.Popen(argv,
                                 stdout=subprocess.PIPE,
-                                stderr=subprocess.PIPE).communicate()[1]
-
-    def _invoke_super(self, name, arg=None):
-        return super(type(self), self).__getattr__(name)(arg)
+                                stderr=subprocess.PIPE).communicate()
 
     def __getattr__(self, name):
         if name.startswith("super_"):
@@ -85,7 +91,6 @@ class Command(object):
     @classmethod
     def _make_method_for_object(cls, option, self):
         def func(self, arg=None):
-            print "processing option %s" % option.name
             new_args = list(self.args)
             new_args.append(option.switch)
             if arg:
@@ -101,13 +106,14 @@ class Command(object):
         self.args.append(arg)
         return self
 
-    def run(self):
-        print "running ", self.binary, self.args
-
     def pipe(self, other):
         # run myself, capture outputs
         # run other, passing input
         pass
+
+    def raise_missing_param(self, *params):
+        msg = "missing params: %s" % ", ".join(params)
+        raise CommandUsageError(msg)
 
     def _parse_usage(self, usage):
         return UsageParser().parse(usage)

@@ -109,7 +109,7 @@ class TestCommand(unittest.TestCase):
 
             def l(self):
                 # We will check that the -l option is processed.
-                return self._invoke_super("l")
+                return self.super_l()
 
             def a(self):
                 # We will check that the -a option is ignored.
